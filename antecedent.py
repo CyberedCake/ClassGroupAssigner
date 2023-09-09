@@ -89,6 +89,24 @@ class AntecedentGUI:
         class_question.place(relx=0.05, rely=0.13)
         self.page.append(class_question)
 
+        version = Label(self.root,
+                        text="Version: " + self.main.updater.version,
+                        font=("Consolas", 8),
+                        bg="#b8b8b8",
+                        pady=0
+                        )
+        version.place(relx=1, rely=0.95, anchor="e")
+
+        is_up_to_date = self.main.updater.is_up_to_date
+        distance = self.main.updater.distance_out_of_date
+        is_latest = Label(self.root,
+                          text=("On the latest version!" if is_up_to_date is True else f"Outdated by {str(self.main.updater.distance_out_of_date)} versions!" if distance != -1 else "Outdated software!"),
+                          font=("Consolas", 8),
+                          bg="#b8b8b8",
+                          fg=("#38803e" if is_up_to_date is True else "#803838")
+                          )
+        is_latest.place(relx=1, rely=0.98, anchor="e")
+
         x = 0.10
         y = 0.25
 

@@ -4,6 +4,7 @@ import os
 import json
 import time
 import threading
+import urllib.request
 from tkinter import *
 
 
@@ -67,26 +68,86 @@ class Updater:
     UPDATE_URL = "https://update.cga.check.noahf.net/"
     RETRIEVE_FROM = "https://update.cga.download.noahf.net/"
 
-    def __init__(self):
-        version_history_file = open("version-history.json", "r")
+    def request_new_version(self):
+        self.root = Toplevel()
 
-        self.data = json.load(version_history_file)
-        self.version = self.data["current"]
-        self.previous = self.data["previous"]
+        self.background = "#4d4d4d"
+        self.root.title("Update Recommended")
+        self.root.resizable(width=False, height=False)
+        self.default_size = (250, 250)
+        self.root.configure(bg=self.background)
 
-        version_history_file.close()
+        label_test = Label(self.root,
+                           text="Update available!",
+                           font=("Consolas", 18),
+                           bg="#696969",
+                           fg="white",
+                           pady=15
+                           )
+        label_test.place(relwidth=1)
 
-        print("Found version(s): " + str(self.data))
+        install_now = Button(self.root,
+                            text="Install now",
+                            font=("Consolas", 14),
+                            bg="#3dfc73"
+                            )
+        install_now.place(relx=0.5, rely=0.5, anchor=CENTER)
 
+        install_later = Button(self.root,
+                               text="Later",
+                               font=("Consolas", 14),
+                               bg="#b8b8b8",
+                               command=lambda: self.root.destroy()
+                               )
+        install_later.place(relx=0.5, rely=0.75, anchor=CENTER)
 
+        Main.center_window(self.root, width=self.default_size[0], height=self.default_size[1])
 
-        print("Update checked failed: Not setup")
+        self.loader.root.wait_window(self.root)
+
+        pass
+
+    def __init__(self, loader):
+        self.loader = loader
+
+        with open("version-history.json", "r") as data:
+            self.local_data = json.load(data)
+
+        self.version = self.local_data["current"]
+
+        print("Found version(s) locally: " + str(self.local_data))
+
+#        with urllib.request.urlopen(self.UPDATE_URL) as data:
+#            self.web_data = json.loads(data.read().decode('utf-8'))
+        with open("fake-online-version.json", "r") as data:
+            self.web_data = json.load(data)
+
+        self.latest_version = self.web_data["current"]
+
+        print("Found version(s) online: " + str(self.web_data))
+
+        self.is_up_to_date = self.version == self.latest_version
+
+        self.distance_out_of_date = -1
+        if not self.is_up_to_date:
+            for index, item in enumerate(self.web_data["previous"]):
+                if item == self.version:
+                    self.distance_out_of_date = index + 1
+                    break
+
+            print("".join("-" for i in range(0, 45)))
+            print("User is out of date by " + str(self.distance_out_of_date) + " version(s).")
+            print("".join("-" for i in range(0, 45)))
+            self.request_new_version()
+            return
+
+        print("Update check complete. Software is up-to-date.")
 
 
 class Main:
     def __init__(self, loader):
         loader.write_reason("Checking for updates")
-        self.updater = Updater()
+        self.updater = Updater(loader)
 
         loader.write_reason("Retrieving classes list")
         self.classes = Classes.get_files("//classes//")
@@ -98,12 +159,13 @@ class Main:
         self.gui = guiClass.AntecedentGUI(self, self.classes, loader)
 
     @staticmethod
-    def center_window(win):
-        width = win.winfo_width()
-        height = win.winfo_height()
+    def center_window(win, width=0, height=0):
+        width = win.winfo_width() if width == 0 else width
+        height = win.winfo_height() if height == 0 else height
         screen_width = round(win.winfo_screenwidth() / 2) - round(width / 2)
         screen_height = round(win.winfo_screenheight() / 2) - round(height / 2) - 50
 
+        print("Setting window geometry of " + str(win.winfo_id()) + " to " + str(width) + "x" + str(height) + "+" + str(screen_width) + "+" + str(screen_height))
         win.geometry(str(width) + "x" + str(height) + "+" + str(screen_width) + "+" + str(screen_height))
 
 
