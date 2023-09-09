@@ -7,9 +7,6 @@ import threading
 from tkinter import *
 
 
-VERSION = "0.1-SNAPSHOT"
-
-
 def get_path():
     return os.path.abspath(os.path.join(os.path.dirname(__file__)))
 
@@ -71,6 +68,18 @@ class Updater:
     RETRIEVE_FROM = "https://update.cga.download.noahf.net/"
 
     def __init__(self):
+        version_history_file = open("version-history.json", "r")
+
+        self.data = json.load(version_history_file)
+        self.version = self.data["current"]
+        self.previous = self.data["previous"]
+
+        version_history_file.close()
+
+        print("Found version(s): " + str(self.data))
+
+
+
         print("Update checked failed: Not setup")
 
 
