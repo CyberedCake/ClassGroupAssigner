@@ -1,12 +1,13 @@
-import threading
-from tkinter import *
+import ctypes
+import functools
 import os
 import random
+import threading
+from tkinter import *
+
+import editor
 import nameviewer
 import resultsgui
-import ctypes
-import editor
-import functools
 
 
 def start_thread(lamb):

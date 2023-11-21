@@ -1,8 +1,7 @@
-import sys
-import os
 import json
-import string
 import random
+import string
+
 
 class Convert:
 

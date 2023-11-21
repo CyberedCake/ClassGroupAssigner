@@ -1,11 +1,9 @@
-from tkinter import *
-from tkinter import simpledialog
-import re
-from typing import Optional
-from enum import Enum
-
 import ctypes
 import functools
+import re
+from tkinter import *
+from tkinter import simpledialog
+from typing import Optional
 
 
 class SanitationError:

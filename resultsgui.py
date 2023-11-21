@@ -1,7 +1,8 @@
-from tkinter import *
-import os
-import antecedent
 import __main__
+import os
+from tkinter import *
+
+import antecedent
 import functionality
 
 

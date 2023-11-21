@@ -1,16 +1,14 @@
+import copy
+import ctypes
+import json
 import logging
+import os
+import threading
+import time
 import traceback
+from tkinter import *
 
 import antecedent as guiClass
-import functionality as func
-import os
-import json
-import time
-import threading
-import urllib.request
-import ctypes
-import copy
-from tkinter import *
 
 
 def get_path():

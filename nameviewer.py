@@ -1,7 +1,6 @@
-from tkinter import *
 import os
 import random
-from __main__ import *
+from tkinter import *
 
 
 class NameViewer:

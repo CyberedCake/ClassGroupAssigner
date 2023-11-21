@@ -1,5 +1,4 @@
 import random
-from __main__ import *
 
 
 # noinspection PyStatementEffect
