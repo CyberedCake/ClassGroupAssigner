@@ -6,6 +6,7 @@ import nameviewer
 import resultsgui
 import ctypes
 import editor
+import functools
 
 
 def start_thread(lamb):
@@ -37,6 +38,17 @@ class AntecedentGUI:
         self.back.place(relx=0.01, rely=0.01)
         self.page.append(self.back)
 
+    def internal_lambda(self):
+        try:
+            self.main.updater.request_new_version(self.root)
+        except RuntimeError as err:
+            print("Function may have failed, found error: " +
+                  str(type(err))[len("<class '"):len(str(type(err)))-len("'>")] + ": " + str(err))
+
+    def check_updates(self, e):
+        thread = threading.Thread(target=self.internal_lambda, args=(), daemon=True)
+        thread.start()
+
     def __init__(self, main, classes, loader):
         self.root = Tk()
         self.main = main
@@ -54,6 +66,7 @@ class AntecedentGUI:
                             height=self.size[1],
                             bg=self.background)
         self.root.minsize(self.size[0], self.size[1])
+        Tk.report_callback_exception = self.main.handle_exception
 
         self.back = Button(self.root)
 
@@ -78,6 +91,7 @@ class AntecedentGUI:
 
         self.root.mainloop()
 
+    # noinspection PyUnboundLocalVariable
     def which_class_text(self):
         self.clear()
 
@@ -93,19 +107,34 @@ class AntecedentGUI:
                         text="Version: " + self.main.updater.version,
                         font=("Consolas", 8),
                         bg="#b8b8b8",
-                        pady=0
+                        pady=0,
+                        cursor="hand2"
                         )
         version.place(relx=1, rely=0.95, anchor="e")
 
         is_up_to_date = self.main.updater.is_up_to_date
         distance = self.main.updater.distance_out_of_date
+        if is_up_to_date is True:
+            is_latest_text = "On the latest version!"
+            is_latest_color = "#38803e"
+        elif is_up_to_date is False:
+            is_latest_text = f"Outdated by {str(self.main.updater.distance_out_of_date)} versions!" if distance != -1 else "Outdated software!"
+            is_latest_color = "#803838"
+            if self.main.updater.was_successful is False:
+                is_latest_text = "Update check failed!"
+                is_latest_color = "#737373"
+
         is_latest = Label(self.root,
-                          text=("On the latest version!" if is_up_to_date is True else f"Outdated by {str(self.main.updater.distance_out_of_date)} versions!" if distance != -1 else "Outdated software!"),
+                          text=is_latest_text,
                           font=("Consolas", 8),
                           bg="#b8b8b8",
-                          fg=("#38803e" if is_up_to_date is True else "#803838")
+                          fg=is_latest_color,
+                          cursor="hand2"
                           )
         is_latest.place(relx=1, rely=0.98, anchor="e")
+
+        is_latest.bind("<Button-1>", self.check_updates)
+        version.bind("<Button-1>", self.check_updates)
 
         x = 0.10
         y = 0.25
@@ -200,7 +229,7 @@ one must have information.
                              text="Open class editor",
                              font=("Consolas", 12),
                              pady=5,
-                             command=lambda: editor.Editor(self, clazz))
+                             command=functools.partial(editor.Editor, self, clazz))
         open_editor.place(relx=0.5, rely=0.9, anchor=CENTER)
         self.page.append(open_editor)
 

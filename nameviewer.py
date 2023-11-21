@@ -18,6 +18,7 @@ class NameViewer:
                             bg=gui.background
                             )
         self.root.minsize(self.size[0], self.size[1])
+        self.root.grab_set()
 
         self.header = Label(self.root,
                             bg="#17202A",
@@ -67,7 +68,7 @@ class NameViewer:
             self.members.destroy()
             self.window_size.destroy()
         except Exception as err:
-            do_nothing = err
+            pass
 
         self.scrollbar = Scrollbar(self.root)
         self.scrollbar.pack(side=RIGHT, fill=Y)
