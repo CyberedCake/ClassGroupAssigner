@@ -6,6 +6,7 @@ import os
 import threading
 import time
 import traceback
+import urllib.request
 from tkinter import *
 
 import antecedent as guiClass
@@ -49,7 +50,6 @@ class Classes:
         write_file.writelines(json_data)
         write_file.close()
 
-
     def get_name(self):
         return self.get_values()["name"]
 
@@ -81,15 +81,14 @@ class Classes:
 
 
 class Updater:
-
     UPDATE_URL = "https://update.cga.check.noahf.net/"
     RETRIEVE_FROM = "https://update.cga.download.noahf.net/"
 
     def install(self):
         print("Unable to update: Not set up")
         self.root.destroy()
-        returned = ctypes.windll.user32.MessageBoxW(0, "Failed to update: Exception('Unable to update: Not set up')", "Update Failed!", 0x10 | 0x00)
-
+        returned = ctypes.windll.user32.MessageBoxW(0, "Failed to update: Exception('Unable to update: Not set up')",
+                                                    "Update Failed!", 0x10 | 0x00)
 
     def ignore(self):
         print("User declined to update")
@@ -116,7 +115,6 @@ class Updater:
         self.root.configure(bg=self.background)
         self.root.grab_set()
 
-
         label_test = Label(self.root,
                            text=self.differ("Up to date!", "Update Available!", "Update Failed!"),
                            font=("Consolas", 18, "bold"),
@@ -127,21 +125,23 @@ class Updater:
         label_test.place(relwidth=1)
 
         amount_behind = Label(self.root,
-                              text=self.differ("You are on the latest version!", f"You are {str(self.distance_out_of_date)} version(s) behind!", "Failed to update, it seems there was an error."),
+                              text=self.differ("You are on the latest version!",
+                                               f"You are {str(self.distance_out_of_date)} version(s) behind!",
+                                               "Failed to update, it seems there was an error."),
                               font=("Consolas", self.differ(9, 9, 7), "bold", "italic"),
                               bg="#696969",
                               fg=self.differ("#7aff85", "#ffbf00", "#cfb9eb"),
                               pady=5
                               )
-        amount_behind.place(rely=0.2, relwidth=1)   
+        amount_behind.place(rely=0.2, relwidth=1)
 
         if self.is_up_to_date is False:
             install_now = Button(self.root,
-                                text="Install",
-                                font=("Consolas", 20, "bold"),
-                                bg="#3dfc73",
-                                command=lambda: self.install()
-                                )
+                                 text="Install",
+                                 font=("Consolas", 20, "bold"),
+                                 bg="#3dfc73",
+                                 command=lambda: self.install()
+                                 )
             install_now.place(relx=0.1, rely=0.6, anchor="w")
 
             install_later = Button(self.root,
@@ -160,7 +160,6 @@ class Updater:
                            command=lambda: self.ignore()
                            )
             close.place(relx=0.5, rely=0.6, anchor=CENTER)
-            
 
         Main.center_window(self.root, width=self.default_size[0], height=self.default_size[1])
 
@@ -180,10 +179,10 @@ class Updater:
         print("Found version(s) locally: " + str(self.local_data))
 
         try:
-            with open("fake-online-version.json", "r") as data:
-                self.web_data = json.load(data)
-            #with urllib.request.urlopen(self.UPDATE_URL) as data:
-            #    self.web_data = json.loads(data.read().decode('utf-8'))
+            # with open("fake-online-version.json", "r") as data:
+            #    self.web_data = json.load(data)
+            with urllib.request.urlopen(self.UPDATE_URL) as data:
+                self.web_data = json.loads(data.read().decode('utf-8'))
         except Exception as err:
             print("----------------------------------------")
             print("FAILED TO CHECK FOR UPDATES!")
@@ -235,11 +234,12 @@ class Main:
         self.gui = guiClass.AntecedentGUI(self, self.classes, loader)
 
     def handle_exception(self, *args):
+        print("Error using " + str(self))
         error = traceback.format_exception(*args)
         logging.error("".join(error).strip())
-        returned = ctypes.windll.user32.MessageBoxW(0,
-                                                    "An error occurred while executing the program:\n\n" + str(''.join(error)),
-                                                    "An Error Occurred", 0x10 | 0x40000)
+        ctypes.windll.user32.MessageBoxW(0,
+                                         "An error occurred while executing the program:\n\n" + str(''.join(error)),
+                                         "An Error Occurred", 0x10 | 0x40000)
 
     @staticmethod
     def center_window(win, width=0, height=0):
@@ -248,13 +248,15 @@ class Main:
         screen_width = round(win.winfo_screenwidth() / 2) - round(width / 2)
         screen_height = round(win.winfo_screenheight() / 2) - round(height / 2) - 50
 
-        print("Setting window geometry of " + str(win.winfo_id()) + " to " + str(width) + "x" + str(height) + "+" + str(screen_width) + "+" + str(screen_height))
+        print("Setting window geometry of " + str(win.winfo_id()) + " to " + str(width) + "x" + str(height) + "+" + str(
+            screen_width) + "+" + str(screen_height))
         win.geometry(str(width) + "x" + str(height) + "+" + str(screen_width) + "+" + str(screen_height))
 
 
+# noinspection DuplicatedCode
 class Loader:
-    WAIT_TIME = 1 # seconds
-    
+    WAIT_TIME = 1  # seconds
+
     def __init__(self):
         self.request_exit = False
         self.exit_success = False
@@ -275,19 +277,28 @@ class Loader:
             return False
         return True
 
+    def handle_exception(self, *args):
+        print("Error using " + str(self))
+        error = traceback.format_exception(*args)
+        logging.error("".join(error).strip())
+        ctypes.windll.user32.MessageBoxW(0,
+                                         "An error occurred while executing the program:\n\n" + str(''.join(error)),
+                                         "An Error Occurred", 0x10 | 0x40000)
+
     def load_menu(self):
         self.root = Tk()
         self.background = "#4d4d4d"
         self.root.title("Class Group Assigner")
         self.root.resizable(width=False, height=False)
         self.root.configure(width=400, height=100, bg=self.background)
+        Tk.report_callback_exception = self.handle_exception
 
         label = Label(self.root,
-                          bg=self.background,
-                          fg="white",
-                          text="Loading program",
-                          font=("Consolas", 15),
-                          pady=0)
+                      bg=self.background,
+                      fg="white",
+                      text="Loading program",
+                      font=("Consolas", 15),
+                      pady=0)
         label.place(relx=0.5, rely=0.3, anchor=CENTER)
 
         self.new_stage = "Starting program"
@@ -308,7 +319,8 @@ class Loader:
         self.root.attributes('-topmost', False)
         Main.center_window(self.root)
 
-        self.root.after(round(self.WAIT_TIME * 1000), lambda: threading.Thread(target=lambda: Main(self), args=()).start())
+        self.root.after(round(self.WAIT_TIME * 1000),
+                        lambda: threading.Thread(target=lambda: Main(self), args=()).start())
         self.root.after(round(self.WAIT_TIME * 1000), self.should_exit)
 
         self.root.mainloop()
@@ -323,7 +335,7 @@ class Loader:
         try:
             self.root.destroy()
         except TclError as err:
-            print("Failed destroy: " + str(type(err))[len("<class '"):0-len("'>")] + ": " + str(err))
+            print("Failed destroy: " + str(type(err))[len("<class '"):0 - len("'>")] + ": " + str(err))
         self.exit_success = True
 
 
