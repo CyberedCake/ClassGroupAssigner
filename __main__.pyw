@@ -101,7 +101,7 @@ class Updater:
         if self.is_up_to_date is True:
             return up_to_date
         elif self.is_up_to_date is False:
-            if self.main.updater.was_successful is False:
+            if self.was_successful is False:
                 return unable
             return outdated
 
@@ -112,34 +112,38 @@ class Updater:
         self.root.title(self.differ("Up to date!", "Update Recommended!", "Update Check Failed!"))
         self.root.resizable(width=False, height=False)
         self.default_size = (250, 250)
-        self.root.configure(bg=self.background)
+        self.root.configure(bg="white")
         self.root.grab_set()
+
+        self.header_color = "#dbdbdb"
+        self.text_color = "#141414"
 
         label_test = Label(self.root,
                            text=self.differ("Up to date!", "Update Available!", "Update Failed!"),
-                           font=("Consolas", 18, "bold"),
-                           bg="#696969",
-                           fg="white",
+                           font=("Consolas", 18),
+                           bg=self.header_color,
+                           fg="#303030",
                            pady=15
                            )
         label_test.place(relwidth=1)
 
         amount_behind = Label(self.root,
-                              text=self.differ("You are on the latest version!",
-                                               f"You are {str(self.distance_out_of_date)} version(s) behind!",
+                              text=self.differ("On the latest version!",
+                                               f"{str(self.distance_out_of_date)} version(s) behind!",
                                                "Failed to update, it seems there was an error."),
-                              font=("Consolas", self.differ(9, 9, 7), "bold", "italic"),
-                              bg="#696969",
-                              fg=self.differ("#7aff85", "#ffbf00", "#cfb9eb"),
+                              font=("Consolas", self.differ(14, 14, 7), "bold", "italic"),
+                              bg=self.header_color,
+                              fg=self.differ("#00a803", "#eb9800", "#616161"),
                               pady=5
                               )
         amount_behind.place(rely=0.2, relwidth=1)
 
-        if self.is_up_to_date is False:
+        if self.is_up_to_date is False and self.was_successful is True:
             install_now = Button(self.root,
                                  text="Install",
-                                 font=("Consolas", 20, "bold"),
-                                 bg="#3dfc73",
+                                 font=("Consolas", 20),
+                                 bg="#10f000",
+                                 fg=self.text_color,
                                  command=lambda: self.install()
                                  )
             install_now.place(relx=0.1, rely=0.6, anchor="w")
@@ -148,10 +152,11 @@ class Updater:
                                    text="Later",
                                    font=("Consolas", 14),
                                    bg="#b8b8b8",
+                                   fg=self.text_color,
                                    command=lambda: self.ignore()
                                    )
             install_later.place(relx=0.9, rely=0.6, anchor="e")
-        elif self.is_up_to_date is True:
+        elif self.is_up_to_date is True or self.was_successful is False:
             close = Button(self.root,
                            text="Close",
                            font=("Consolas", 20, "bold"),
@@ -160,16 +165,17 @@ class Updater:
                            command=lambda: self.ignore()
                            )
             close.place(relx=0.5, rely=0.6, anchor=CENTER)
+            if self.was_successful is False:
+                print(f"Unable to update: {str(type(self.failed_error))}: {str(self.failed_error)}")
 
         Main.center_window(self.root, width=self.default_size[0], height=self.default_size[1])
 
         self.loader.root.wait_window(self.root)
 
-        pass
-
     def __init__(self, main, loader):
         self.loader = loader
         self.main = main
+        self.was_successful = False # initially false because who cares (answer: not the program)
 
         with open("version-history.json", "r") as data:
             self.local_data = json.load(data)
@@ -179,10 +185,10 @@ class Updater:
         print("Found version(s) locally: " + str(self.local_data))
 
         try:
-            # with open("fake-online-version.json", "r") as data:
-            #    self.web_data = json.load(data)
-            with urllib.request.urlopen(self.UPDATE_URL) as data:
-                self.web_data = json.loads(data.read().decode('utf-8'))
+             with open("fake-online-version.json", "r") as data:
+                self.web_data = json.load(data)
+            #with urllib.request.urlopen(self.UPDATE_URL) as data:
+             #   self.web_data = json.loads(data.read().decode('utf-8'))
         except Exception as err:
             print("----------------------------------------")
             print("FAILED TO CHECK FOR UPDATES!")
@@ -194,6 +200,7 @@ class Updater:
             self.distance_out_of_date = -1
             self.ignore()
             self.was_successful = False
+            self.failed_error = err
             return
 
         self.was_successful = True
@@ -225,13 +232,16 @@ class Main:
         self.updater = Updater(self, loader)
 
         loader.write_reason("Retrieving classes list")
-        self.classes = Classes.get_files("//classes//")
+        self.refresh_classes()
 
         loader.write_reason("Generating random seed")
         self.seed = str(round(time.time()))
 
         loader.write_reason("Creating base GUI")
-        self.gui = guiClass.AntecedentGUI(self, self.classes, loader)
+        self.gui = guiClass.AntecedentGUI(self, loader)
+
+    def refresh_classes(self):
+        self.classes = Classes.get_files("//classes//")
 
     def handle_exception(self, *args):
         print("Error using " + str(self))
@@ -262,9 +272,9 @@ class Loader:
         self.exit_success = False
 
     def write_reason(self, reason):
+        print(reason)
         self.root.title("Class Group Assigner - " + str(reason))
         self.exact.config(text=str(reason))
-        print(reason)
 
     def await_request_exit(self, first=True):
         self.request_exit = True

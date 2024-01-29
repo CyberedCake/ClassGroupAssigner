@@ -149,6 +149,7 @@ class Editor:
             self.refresh_list()
         else:
             self.changes[path] = value
+            
 
         print(f"Changed path={str(path)}, is_saved={str(self.is_saved())}, new=" + str(value))
         print("Changes: " + str(self.changes))
@@ -313,6 +314,10 @@ class Editor:
         self.changes = self.clazz.get_values().copy()
         self.original = self.clazz.get_values()
         self.update_save_status()
+
+        if str(self.changes["name"]) is not self.name.replace("Edit Class: ", ""):
+            self.name = "Edit Class: " + str(self.changes["name"])
+            self.header.configure(text=self.name)
 
     def window_close_event(self):
         self.update_save_status()

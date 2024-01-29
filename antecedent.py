@@ -3,11 +3,13 @@ import functools
 import os
 import random
 import threading
+import pyautogui
 from tkinter import *
 
 import editor
 import nameviewer
 import resultsgui
+import createclass
 
 
 def start_thread(lamb):
@@ -50,10 +52,16 @@ class AntecedentGUI:
         thread = threading.Thread(target=self.internal_lambda, args=(), daemon=True)
         thread.start()
 
-    def __init__(self, main, classes, loader):
+    def run_context(self):
+        try:
+            x, y = pyautogui.position()
+            self.context.tk_popup(x, y)
+        finally:
+            self.context.grab_release()
+
+    def __init__(self, main, loader):
         self.root = Tk()
         self.main = main
-        self.classes = classes
 
         random.seed(main.seed)
 
@@ -95,13 +103,14 @@ class AntecedentGUI:
     # noinspection PyUnboundLocalVariable
     def which_class_text(self):
         self.clear()
+        self.classes = self.main.classes
 
         class_question = Label(self.root,
                                text="Which class?",
                                font=("Consolas", 20),
                                bg=self.background,
                                pady=5)
-        class_question.place(relx=0.05, rely=0.13)
+        class_question.place(relx=0.05, rely=0.17, anchor="w")
         self.page.append(class_question)
 
         version = Label(self.root,
@@ -121,7 +130,7 @@ class AntecedentGUI:
         elif is_up_to_date is False:
             is_latest_text = f"Outdated by {str(self.main.updater.distance_out_of_date)} versions!" if distance != -1 else "Outdated software!"
             is_latest_color = "#803838"
-            if self.main.updater.was_successful is False:
+            if self.main.updater.was_successful == False:
                 is_latest_text = "Update check failed!"
                 is_latest_color = "#737373"
 
@@ -133,6 +142,22 @@ class AntecedentGUI:
                           cursor="hand2"
                           )
         is_latest.place(relx=1, rely=0.98, anchor="e")
+
+        self.context = Menu(self.root, tearoff=0)
+        self.context.add_command(label="New class from scratch", command=lambda: createclass.CreateClass(self, 0))
+        self.context.add_command(label="New class from text", command=lambda: createclass.CreateClass(self, 1))
+
+        self.add_class = Button(self.root,
+                                 bg="#208f14",
+                                 fg="white",
+                                 text="New",
+                                 font=("Consolas", 11),
+                                 padx=-5,
+                                 pady=-5,
+                                 command=self.run_context
+                                 )
+        self.add_class.place(relx=1 - 0.05, rely=0.17, anchor="e")
+        self.page.append(self.add_class)
 
         is_latest.bind("<Button-1>", self.check_updates)
         version.bind("<Button-1>", self.check_updates)
@@ -256,7 +281,30 @@ one must have information.
         generate_button.place(relx=0.5, rely=0.65, anchor=CENTER)
         self.page.append(generate_button)
 
+        self.delete = Button(self.root,
+                           bg="red",
+                           fg="#EAECEF",
+                           text="Delete Class",
+                           font=("Consolas", 9),
+                             command=lambda:
+                             self.delete_class(clazz)
+                           )
+        self.delete.place(relx=0.01, y=(self.default_size[1] * 0.10))
+        self.page.append(self.delete)                
+
         self.put_back_button(self.which_class_text)
+
+    def delete_class(self, clazz):
+        returned = ctypes.windll.user32.MessageBoxW(0,
+                                         f"ARE YOU ABSOLUTELY SURE YOU WANT TO DELETE THIS CLASS?\n\n'{str(clazz.get_name())}'\n\nTHIS ACTION IS STRICTLY IRREVERSIBLE!",
+                                         "Delete Class: " + str(clazz.get_name()),
+                                                    0x30 | 0x4 | 0x100 | 0x400000)
+        print("Pressed number: " + str(returned))
+        if returned == 6: # user pressed yes
+            print("-> Converts to Yes")
+        elif returned == 7: # user pressed no
+            print("-> Converts to No")
+        
 
     def show_results(self, clazz):
         groups = -1 if self.groups_entry.get() == "" else int(self.groups_entry.get())
